@@ -167,6 +167,49 @@ namespace WebApplication3.Controllers.Users
             }
             return Ok(new { message = response.Message });
         }
+
+        //forgot password
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest(new { message = "Invalid email" });
+            }
+            var response = await userService.ForgotPasswordAsync(email);
+            if (!response.Success)
+            {
+                return BadRequest(new { message = response.Message });
+            }
+            return Ok(new { message = response.Message });
+        }
+
+        //reset forgotten password
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(string UserId, string token, string newPassword)
+        {
+            if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(token) || string.IsNullOrEmpty(newPassword))
+            {
+                return BadRequest(new { message = "Invalid data" });
+            }
+            var response = await userService.ResetPasswordAsync(UserId, token, newPassword);
+            if (!response.Success)
+            {
+                return BadRequest(new { message = response.Message });
+            }
+            return Ok(new { message = response.Message });
+        }
+
+
+
+
+
+
+
+
+
+
+
     }
 }
 

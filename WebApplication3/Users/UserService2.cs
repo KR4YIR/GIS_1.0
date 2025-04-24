@@ -66,7 +66,6 @@ namespace WebApplication3.Users
             var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedEmailToken = System.Net.WebUtility.UrlEncode(emailToken);
             var emailConfirmationLink = $"http://localhost:5017/api/Users/confirm-email?userId={user.Id}&token={encodedEmailToken}";
-            Console.WriteLine($"Email confirmation link: {emailConfirmationLink}");
             if (_emailSender == null)
             {
                 throw new Exception("EmailSender is null");
@@ -75,8 +74,23 @@ namespace WebApplication3.Users
             await _emailSender.SendEmailAsync(
                 user.Email,
                 "Confirm Your Email",
-                $"Please confirm your email by clicking the link: <a href='{emailConfirmationLink}'>Click here</a>"
-            );
+                $@"
+                <div style='max-width:600px;margin:0 auto;padding:20px;border:1px solid #e0e0e0;border-radius:8px;font-family:Arial,sans-serif;background-color:#f9f9f9;'>
+                    <h2 style='color:#333;'>Confirm Your Email</h2>
+                    <p style='font-size:14px;color:#555;'>
+                        Thank you for registering! Please confirm your email address by clicking the button below. This helps us keep your account secure.
+                    </p>
+                    <div style='text-align:center;margin:30px 0;'>
+                        <a href='{emailConfirmationLink}' 
+                           style='background-color:#28a745;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:16px;display:inline-block;'>
+                           Confirm Email
+                        </a>
+                    </div>
+                    <p style='font-size:12px;color:#888;'>If the button above doesn’t work, copy and paste this link into your browser:</p>
+                    <p style='font-size:12px;word-break:break-all;color:#888;'>{emailConfirmationLink}</p>
+                    <p style='font-size:12px;color:#aaa;margin-top:40px;'>© {DateTime.Now.Year} İbrahim Bayram. All rights reserved.</p>
+                </div>");
+
             // Return success 
             return new ApiResponse<Guid>(true, "Operation succeeded.", user.Id);
         }
@@ -342,6 +356,66 @@ namespace WebApplication3.Users
 
             return new ApiResponse<bool>(true, "Password updated successfully.", true);
         }
+        //forgot password
+        public async Task<ApiResponse<bool>> ForgotPasswordAsync(string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new ApiResponse<bool>(false, "User not found.", false);
+            }
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = System.Net.WebUtility.UrlEncode(token);
+            var resetLink = $"http://localhost:5173/reset-password?userId={user.Id}&token={encodedToken}";
+
+            await _emailSender.SendEmailAsync(
+                email,
+                "Reset Your Password",
+                $@"
+                <div style='max-width:600px;margin:0 auto;padding:20px;border:1px solid #e0e0e0;border-radius:8px;font-family:Arial,sans-serif;background-color:#f9f9f9;'>
+                    <h2 style='color:#333;'>Reset Your Password</h2>
+                    <p style='font-size:14px;color:#555;'>
+                        We received a request to reset your password. Click the button below to set a new one. If you didn’t request this, you can safely ignore this email.
+                    </p>
+                    <div style='text-align:center;margin:30px 0;'>
+                        <a href='{resetLink}' 
+                           style='background-color:#007bff;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:16px;display:inline-block;'>
+                           Reset Password
+                        </a>
+                    </div>
+                    <p style='font-size:12px;color:#888;'>If the button above doesn’t work, you can also copy and paste the following link into your browser:</p>
+                    <p style='font-size:12px;word-break:break-all;color:#888;'>{resetLink}</p>
+                    <p style='font-size:12px;color:#aaa;margin-top:40px;'>© {DateTime.Now.Year} İbrahim Bayram. All rights reserved.</p>
+                </div>");
+
+            return new ApiResponse<bool>(true, "Password reset link sent to your email.", true);
+        }
+        //reset password
+        public async Task<ApiResponse<bool>> ResetPasswordAsync(string UserId, string token, string newPassword)
+        {
+            var user = await userManager.FindByIdAsync(UserId);
+            if (user == null)
+            {
+                return new ApiResponse<bool>(false, "User not found.", false);
+            }
+            var result = await userManager.ResetPasswordAsync(user, token, newPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new ApiResponse<bool>(false, $"Password reset failed: {errors}", false);
+            }
+            return new ApiResponse<bool>(true, "Password reset successfully.", true);
+        }
+
+
+
+
+
+
+
+
+
+
 
     }
 }
