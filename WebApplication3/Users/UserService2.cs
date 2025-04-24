@@ -66,6 +66,7 @@ namespace WebApplication3.Users
             var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedEmailToken = System.Net.WebUtility.UrlEncode(emailToken);
             var emailConfirmationLink = $"http://localhost:5017/api/Users/confirm-email?userId={user.Id}&token={encodedEmailToken}";
+            Console.WriteLine($"Email confirmation link: {emailConfirmationLink}");
             if (_emailSender == null)
             {
                 throw new Exception("EmailSender is null");
